@@ -2,53 +2,49 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
-from tortoise import Tortoise, generate_config
-from tortoise.contrib.fastapi import RegisterTortoise
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
 
-from app.logger import service_logger
+from app.logger import use_logger
 from app.env_validator import get_settings
 from app.containers import AppContainers
 
-from app.hello.endpoints import router as auth_router
+from app.auth.endpoints import router as auth_router
+from app.application.test import router as test_router
 
-logger = service_logger("bootstrapper")
+logger = use_logger("bootstrapper")
 settings = get_settings()
 
 
 def bootstrap() -> FastAPI:
     @asynccontextmanager
-    async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
+    async def lifespan(application: FastAPI):
         logger.info("Starting application")
-        config = generate_config(
-            settings.DATABASE_URI,
-            app_modules={"models": ["app.hello.repository.message"]},
-            testing=settings.APP_ENV == "testing",
-            connection_label="models",
+        motor_client = AsyncIOMotorClient(settings.MONGODB_URI)
+        await init_beanie(
+            database=motor_client[settings.MONGODB_DATABASE],
+            document_models=[
+                "app.user.entities.User",
+                "app.auth.entities.VerificationCode",
+            ],
         )
         application.container = container
-
+        logger.info("Container Wiring started")
         container.wire(
             modules=[
                 __name__,
-                "app.hello.endpoints",
+                "app.auth.endpoints",
             ]
         )
         logger.info("Container Wiring complete")
-        async with RegisterTortoise(
-            app=application,
-            config=config,
-            generate_schemas=True,
-            add_exception_handlers=True,
-        ):
-            logger.info("Tortoise ORM registered")
-            yield
-        logger.info("Shutting down application")
-        await Tortoise.close_connections()
-        logger.info("Tortoise ORM connections closed")
+        logger.info("Application started")
+        yield
+        motor_client.close()
+        logger.info("Motor Client connections closed")
         logger.info("Application shutdown complete")
 
     app = FastAPI(
-        title="FooBar Backend API",
+        title="Mixir Backend API",
         lifespan=lifespan,
         docs_url="/api/docs",
         redoc_url=None,
@@ -61,3 +57,4 @@ container = AppContainers()
 server = bootstrap()
 
 server.include_router(auth_router)
+server.include_router(test_router)

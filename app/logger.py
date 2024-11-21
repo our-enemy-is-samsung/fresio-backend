@@ -10,13 +10,13 @@ log_format = (
 )
 
 
-def service_logger(name):
+def use_logger(name):
     logger = logging.getLogger(name)
 
     env = settings.APP_ENV.lower()
 
     if env == "development" or env == "testing":
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
 
         log_dir = "logs"
         if not os.path.exists(log_dir):
@@ -26,10 +26,10 @@ def service_logger(name):
             maxBytes=1024 * 1024 * 5,
             backupCount=5,
         )
-        file_handler.setLevel(logging.INFO)
+        file_handler.setLevel(logging.DEBUG)
 
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter(log_format)
         file_handler.setFormatter(formatter)
@@ -40,10 +40,10 @@ def service_logger(name):
         logger.addHandler(console_handler)
 
     elif env == "production":
-        logger.setLevel(logging.ERROR)
+        logger.setLevel(logging.INFO)
 
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.ERROR)
+        console_handler.setLevel(logging.INFO)
 
         formatter = logging.Formatter(log_format)
         console_handler.setFormatter(formatter)

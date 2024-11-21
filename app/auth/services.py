@@ -48,7 +48,7 @@ class AuthService:
     async def remove_verification_code(entity_id: str) -> None:
         entity = await VerificationCode.get(entity_id)
         if entity:
-            await entity.delete(...)
+            await entity.delete()
 
     @staticmethod
     async def get_from_credential(email: str) -> User | bool:

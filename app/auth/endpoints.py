@@ -58,7 +58,7 @@ class AuthEndpoint:
         data: EmailVerificationRequestDTO,
         email_service: EmailService = Depends(Provide[AppContainers.email.service]),
         auth_service: AuthService = Depends(Provide[AppContainers.auth.service]),
-        user_id: str = Depends(get_current_user_id)
+        user_id: str = Depends(get_current_user_id),
     ) -> APIResponse[SuccessfulEntityResponse]:
         user = await User.find_one({User.sen_email: data.email})
         if user:
@@ -89,7 +89,7 @@ class AuthEndpoint:
         data: EmailVerificationDTO,
         auth_service: AuthService = Depends(Provide[AppContainers.auth.service]),
     ) -> APIResponse[SuccessfulEntityResponse]:
-        is_verified = await auth_service.verify_code(data.entity_id, data.code)
+        is_verified = await auth_service.verify_code(data.session_id, data.code)
         if not is_verified:
             raise APIError(
                 status_code=400,
@@ -97,10 +97,10 @@ class AuthEndpoint:
                 message="인증 코드가 일치하지 않습니다.",
             )
 
-        await auth_service.remove_verification_code(data.entity_id)
+        await auth_service.remove_verification_code(data.session_id)
         return APIResponse(
             message="이메일 인증에 성공했습니다.",
-            data=SuccessfulEntityResponse(entity_id=data.entity_id),
+            data=SuccessfulEntityResponse(entity_id=data.session_id),
         )
 
     @router.post(
@@ -150,7 +150,9 @@ class AuthEndpoint:
             access_token = await auth_service.create_access_token(str(odm_user.id))
             return APIResponse(
                 message="회원가입 완료. 이메일 인증 필요.",
-                data=UserLoginResponse(request_type=UserLoginRequestType.SIGNUP, access_token=access_token),
+                data=UserLoginResponse(
+                    request_type=UserLoginRequestType.SIGNUP, access_token=access_token
+                ),
             )
         else:
             new_google_credential = GoogleCredential(
@@ -164,5 +166,7 @@ class AuthEndpoint:
             access_token = await auth_service.create_access_token(str(odm_user.id))
             return APIResponse(
                 message="로그인 완료.",
-                data=UserLoginResponse(request_type=UserLoginRequestType.LOGIN, access_token=access_token),
+                data=UserLoginResponse(
+                    request_type=UserLoginRequestType.LOGIN, access_token=access_token
+                ),
             )

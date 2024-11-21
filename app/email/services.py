@@ -1,8 +1,7 @@
 import aiosmtplib
-from email.mime.text import MIMEText
+from email.message import EmailMessage
 import random
 import string
-import asyncio
 
 from app.env_validator import get_settings
 from app.logger import use_logger
@@ -21,9 +20,10 @@ class EmailService:
 
     async def connect(self) -> None:
         self.smtp = aiosmtplib.SMTP(
-            hostname=self.smtp_host, port=self.smtp_port, use_tls=True
+            hostname=self.smtp_host, port=self.smtp_port, use_tls=False, start_tls=False,
         )
         await self.smtp.connect()
+        await self.smtp.starttls()
         await self.smtp.login(self.username, self.password)
 
     async def disconnect(self) -> None:
@@ -38,23 +38,22 @@ class EmailService:
     async def _send_verification_email(self, to_email: str, code: str) -> bool:
         if not self.smtp:
             await self.connect()
-
-        message = MIMEText(
-            f"""
-        Mixir에 오신 것을 환영합니다!
-
-        귀하의 인증 코드는 다음과 같습니다:
-
-        {code}
-
-        이 인증 코드는 10분간 유효합니다.
-        코드를 요청하지 않으셨다면 이 이메일을 무시해주세요.
-        """
-        )
-
+        message = EmailMessage()
         message["From"] = self.username
         message["To"] = to_email
         message["Subject"] = "[Mixir] 이메일 인증 코드는 {0}입니다.".format(code)
+        message.set_content(
+            f"""
+            Mixir에 오신 것을 환영합니다!
+
+            귀하의 인증 코드는 다음과 같습니다:
+
+            {code}
+
+            이 인증 코드는 10분간 유효합니다.
+            코드를 요청하지 않으셨다면 이 이메일을 무시해주세요.
+            """
+        )
 
         try:
             await self.smtp.send_message(message)

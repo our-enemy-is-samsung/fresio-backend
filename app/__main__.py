@@ -9,4 +9,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=settings.SERVER_PORT,
         reload=settings.APP_ENV == "development" or settings.APP_ENV == "testing",
+        reload_dirs=["app"],
     )

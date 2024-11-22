@@ -1,6 +1,5 @@
-from typing import Optional, TYPE_CHECKING
-
 from tortoise import Model, fields
+
 
 class User(Model):
     id: str = fields.UUIDField(pk=True)

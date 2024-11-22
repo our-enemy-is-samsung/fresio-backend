@@ -23,10 +23,7 @@ def bootstrap() -> FastAPI:
         logger.info("Starting application")
         config = generate_config(
             settings.DATABASE_URI,
-            app_modules={
-                "models": [
-                ]
-            },
+            app_modules={"models": []},
             testing=settings.APP_ENV == "testing",
             connection_label="models",
         )

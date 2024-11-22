@@ -1,9 +1,10 @@
 from datetime import datetime
 from uuid import UUID, uuid4
-from beanie import Document, Indexed
+from beanie import Document, Indexed, Link
 from pydantic import Field
 
 from app.application.pydantic_model import BaseSchema
+from app.bracket.entities import Match
 
 
 class GoogleCredential(BaseSchema):
@@ -25,3 +26,4 @@ class User(Document):
     picture: Indexed(str) = Field(..., description="사용자 프로필 사진")
     google_credential: GoogleCredential = Field(..., description="구글 OAuth2 정보")
     verified: bool = Field(False, description="공직자 이메일 인증 여부")
+    matches: list[Link[Match]] = Field([], description="매치 정보")

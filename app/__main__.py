@@ -10,4 +10,5 @@ if __name__ == "__main__":
         port=settings.SERVER_PORT,
         reload=settings.APP_ENV == "development" or settings.APP_ENV == "testing",
         reload_dirs=["app"],
+        reload_excludes=[".venv"],
     )

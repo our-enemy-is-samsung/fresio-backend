@@ -6,7 +6,6 @@ from app.application.error import ErrorCode
 from app.env_validator import get_settings
 from app.logger import use_logger
 
-from app.auth.entities import VerificationCode
 from app.user.entities import User
 from app.application.typevar import USER_ID
 
@@ -24,35 +23,8 @@ class AuthService:
         self.hashed_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     @staticmethod
-    async def create_verification_code(email: str, user_id: str, code: str) -> str:
-        entity = VerificationCode(
-            email=email,
-            user_id=user_id,
-            code=code,
-        )
-        await entity.create()
-        return str(entity.id)
-
-    @staticmethod
-    async def verify_code(entity_id: str, code: str) -> bool:
-        entity = await VerificationCode.get(entity_id)
-        if not entity:
-            return False
-        if entity.code != code:
-            return False
-        user_entity = await User.get(entity.user_id)
-        await user_entity.set({User.verified: True, User.sen_email: entity.email})
-        return True
-
-    @staticmethod
-    async def remove_verification_code(entity_id: str) -> None:
-        entity = await VerificationCode.get(entity_id)
-        if entity:
-            await entity.delete()
-
-    @staticmethod
     async def get_from_credential(email: str) -> User | bool:
-        entity = await User.find_one(User.email == email)
+        entity = await User.get_or_none(email=email)
         if not entity:
             return False
         return entity

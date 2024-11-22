@@ -10,7 +10,7 @@ from slowapi.util import get_remote_address
 
 from app.application.error import ErrorCode
 from app.application.response import APIResponse, APIError
-from app.auth.dto.auth import AuthVerifyDTO
+from app.auth.dto.login_dto import AuthVerifyDTO
 from app.auth.schema.string import AuthorizationURLSchema
 from app.containers import AppContainers
 from app.google.services import GoogleRequestService

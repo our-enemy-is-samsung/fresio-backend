@@ -51,46 +51,11 @@ async def get_current_user_entity(
                 detail="Invalid authentication token",
             )
 
-        user = await User.get(user_id)
+        user = await User.get_or_none(id=user_id)
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication token",
-            )
-        return user
-
-    except PyJWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token",
-        )
-
-
-async def get_current_auth_user_entity(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> User:
-    try:
-        token = credentials.credentials
-
-        payload = jwt_decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
-
-        user_id: str = payload.get("uid")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication token",
-            )
-
-        user = await User.get(user_id)
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication token",
-            )
-        if not user.verified:
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Token is not verified",
             )
         return user
 

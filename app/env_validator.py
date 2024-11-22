@@ -9,20 +9,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     APP_ENV: Literal["development", "production", "testing"]
-    JWT_SECRET_KEY: str
     SERVER_PORT: int
-    MONGODB_URI: str
-    MONGODB_DATABASE: str
-
+    DATABASE_URI: str
+    JWT_SECRET_KEY: str
     GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
-    GOOGLE_REDIRECT_URI: str
-
-    GMAIL_ADDRESS: str
-    GMAIL_PASSWORD: str
-    SHEET_TEMPLATE_ID: str
-
-    ADMIN_EMAIL_HOST: str
 
     @staticmethod
     @field_validator("SERVER_PORT")

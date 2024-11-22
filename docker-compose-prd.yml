@@ -1,14 +1,19 @@
 services:
-  mongodb:
-    image: mongo:latest
-    container_name: mixir-dev-mongodb
+  redis:
+    image: redis:alpine
+    container_name: fresio-prd-redis
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: mixir
+      - REDIS_PASSWORD=password
+      -
+  database:
+    image: postgres:alpine
+    container_name: fresio-prd-database
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
     volumes:
-      - mongodb_data:/data/db
-      - ./script/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - fresio_prd_db_data:/var/lib/postgresql/data
 
   app:
     build:
@@ -20,4 +25,4 @@ services:
 
 volumes:
   mongodb_data:
-    name: mixir-dev-mongodb-data
+    name: fresio-prd-mongodb-data

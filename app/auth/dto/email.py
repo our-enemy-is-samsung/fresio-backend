@@ -3,9 +3,15 @@ from typing import Annotated
 from pydantic import EmailStr, StringConstraints, Field
 
 from app.application.pydantic_model import BaseSchema
+from app.env_validator import get_settings
+
+settings = get_settings()
 
 SenEmail = Annotated[
-    EmailStr, StringConstraints(pattern=r"^[a-zA-Z0-9_.+-]+@gmail\.com$")
+    EmailStr,
+    StringConstraints(
+        pattern=f"^[a-zA-Z0-9_.+-]+@(sen\.go\.kr|{settings.ADMIN_EMAIL_HOST})$"
+    ),
 ]
 
 

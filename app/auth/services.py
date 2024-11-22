@@ -41,7 +41,7 @@ class AuthService:
         if entity.code != code:
             return False
         user_entity = await User.get(entity.user_id)
-        await user_entity.set({User.verified: True})
+        await user_entity.set({User.verified: True, User.sen_email: entity.email})
         return True
 
     @staticmethod

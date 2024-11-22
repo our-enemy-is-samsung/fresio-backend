@@ -123,16 +123,16 @@ class AuthEndpoint:
                 message="state 값이 일치하지 않습니다.",
             )
         try:
-            user_credentials = await google_service.fetch_user_credentials(data.code)
-            print(user_credentials)
-            user_credentials.get("access_token"), user_credentials.get("refresh_token")
+            user_credential_data = await google_service.fetch_user_credentials(
+                data.code
+            )
         except aiogoogle.excs.HTTPError:
             raise APIError(
                 status_code=400,
                 error_code=ErrorCode.INVALID_GOOGLE_CODE,
                 message="구글 코드가 유효하지 않습니다.",
             )
-        user_info = await google_service.fetch_user_info(user_credentials)
+        user_info = await google_service.fetch_user_info(user_credential_data)
         odm_user = await User.find({"email": user_info["email"]}).first_or_none()
         if not odm_user:
             odm_user = User(
@@ -140,14 +140,26 @@ class AuthEndpoint:
                 name=user_info["name"],
                 picture=user_info["picture"],
                 google_credential=GoogleCredential(
-                    access_token=user_credentials.get("access_token"),
-                    refresh_token=user_credentials.get("refresh_token"),
-                    access_token_expires_at=user_credentials.get("expires_at"),
+                    access_token=user_credential_data.get("access_token"),
+                    refresh_token=user_credential_data.get("refresh_token"),
+                    access_token_expires_at=user_credential_data.get("expires_at"),
                 ),
                 sen_email=None,
             )
             await odm_user.create()
             access_token = await auth_service.create_access_token(str(odm_user.id))
+
+            user_credential = google_service.build_user_credentials(
+                odm_user.google_credential
+            )
+            response = await google_service.fetch_drive_folder_id_by_name(
+                "Mixir-팀빌딩", credential=user_credential
+            )
+            if len(response["files"]) == 0:
+                await google_service.create_drive_folder(
+                    "Mixir-팀빌딩", credential=user_credential
+                )
+
             return APIResponse(
                 message="회원가입 완료. 이메일 인증 필요.",
                 data=UserLoginResponse(
@@ -156,11 +168,11 @@ class AuthEndpoint:
             )
         else:
             new_google_credential = GoogleCredential(
-                access_token=user_credentials.get("access_token"),
-                refresh_token=user_credentials.get(
+                access_token=user_credential_data.get("access_token"),
+                refresh_token=user_credential_data.get(
                     "refresh_token", odm_user.google_credential.refresh_token
                 ),
-                access_token_expires_at=user_credentials.get("expires_at"),
+                access_token_expires_at=user_credential_data.get("expires_at"),
             )
             await odm_user.set({User.google_credential: new_google_credential})
             access_token = await auth_service.create_access_token(str(odm_user.id))

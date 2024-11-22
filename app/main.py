@@ -11,6 +11,8 @@ from app.containers import AppContainers
 
 from app.auth.endpoints import router as auth_router
 from app.application.test import router as test_router
+from app.student.endpoints import router as student_router
+from app.bracket.endpoints import router as bracket_router
 
 logger = use_logger("bootstrapper")
 settings = get_settings()
@@ -20,12 +22,15 @@ def bootstrap() -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI):
         logger.info("Starting application")
-        motor_client = AsyncIOMotorClient(settings.MONGODB_URI)
+        motor_client = AsyncIOMotorClient(
+            settings.MONGODB_URI, uuidRepresentation="standard"
+        )
         await init_beanie(
             database=motor_client[settings.MONGODB_DATABASE],
             document_models=[
                 "app.user.entities.User",
                 "app.auth.entities.VerificationCode",
+                "app.bracket.entities.Match",
             ],
         )
         application.container = container
@@ -34,6 +39,8 @@ def bootstrap() -> FastAPI:
             modules=[
                 __name__,
                 "app.auth.endpoints",
+                "app.student.endpoints",
+                "app.bracket.endpoints",
             ]
         )
         logger.info("Container Wiring complete")
@@ -58,3 +65,5 @@ server = bootstrap()
 
 server.include_router(auth_router)
 server.include_router(test_router)
+server.include_router(student_router)
+server.include_router(bracket_router)

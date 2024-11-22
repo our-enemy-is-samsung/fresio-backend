@@ -20,7 +20,10 @@ class EmailService:
 
     async def connect(self) -> None:
         self.smtp = aiosmtplib.SMTP(
-            hostname=self.smtp_host, port=self.smtp_port, use_tls=False, start_tls=False,
+            hostname=self.smtp_host,
+            port=self.smtp_port,
+            use_tls=False,
+            start_tls=False,
         )
         await self.smtp.connect()
         await self.smtp.starttls()
@@ -44,15 +47,15 @@ class EmailService:
         message["Subject"] = "[Mixir] 이메일 인증 코드는 {0}입니다.".format(code)
         message.set_content(
             f"""
-            Mixir에 오신 것을 환영합니다!
+        Mixir에 오신 것을 환영합니다!
 
-            귀하의 인증 코드는 다음과 같습니다:
+        귀하의 인증 코드는 다음과 같습니다:
 
-            {code}
+        {code}
 
-            이 인증 코드는 10분간 유효합니다.
-            코드를 요청하지 않으셨다면 이 이메일을 무시해주세요.
-            """
+        이 인증 코드는 10분간 유효합니다.
+        코드를 요청하지 않으셨다면 이 이메일을 무시해주세요.
+        """
         )
 
         try:

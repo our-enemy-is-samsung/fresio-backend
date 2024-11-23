@@ -75,6 +75,7 @@ class AuthEndpoint:
             name=data.name,
             device_id=data.device_id,
             meal_type=data.meal_type,
+            food_check=auth_service.analyze_average_intake(data.food_check).name,
         )
         access_token = await auth_service.create_access_token(str(user.id))
         return APIResponse[dict](

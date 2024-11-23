@@ -1,4 +1,3 @@
-from uuid import UUID
 from dependency_injector.wiring import inject, Provide
 
 from fastapi import APIRouter, Depends, Body, WebSocketDisconnect, WebSocket

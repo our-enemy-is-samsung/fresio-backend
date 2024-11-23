@@ -6,12 +6,10 @@ from tortoise.contrib.fastapi import RegisterTortoise
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.application.response import APIError
 from app.logger import use_logger
 from app.env_validator import get_settings
 from app.containers import AppContainers
 
-from app.user.entities import User
 
 from app.auth.endpoints import router as auth_router
 from app.home.endpoints import router as home_router
@@ -32,7 +30,13 @@ def bootstrap() -> FastAPI:
         logger.info("Starting application")
         config = generate_config(
             settings.DATABASE_URI,
-            app_modules={"models": ["app.user.entities", "app.hardware.entities"]},
+            app_modules={
+                "models": [
+                    "app.user.entities",
+                    "app.hardware.entities",
+                    "app.refrigerator.entities",
+                ]
+            },
             testing=settings.APP_ENV == "testing",
             connection_label="models",
         )

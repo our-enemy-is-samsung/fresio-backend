@@ -45,21 +45,27 @@ class HomeEndpoint:
     @router.get("/expiring-foods", description="홈화면 소비기한 임박 쟤료 UI")
     @inject
     async def get_expiring_foods(
-        self, _user: User = Depends(get_current_user_entity)
+        self, user: User = Depends(get_current_user_entity)
     ) -> APIResponse[list[ExpiringFoodItemSchema]]:
-
-        return APIResponse(
-            message="success",
-            data=[
-                ExpiringFoodItemSchema(
-                    id=uuid.uuid4(),
-                    icon="🍅",
-                    name="토마토",
-                    expired_at=datetime.now(),
-                    quantity=3,
-                )
-            ],
+        now = datetime.now()
+        user = await User.get(id=user.id).prefetch_related("refrigerator")
+        ingredients = (
+            await user.refrigerator.filter(expired_at__gt=now)
+            .order_by("expired_at")
+            .all()
         )
+
+        expiring_foods = [
+            ExpiringFoodItemSchema(
+                id=ingredient.id,
+                icon=ingredient.icon,
+                name=ingredient.name,
+                expired_at=ingredient.expired_at,
+                quantity=ingredient.quantity,
+            )
+            for ingredient in ingredients
+        ]
+        return APIResponse(message="success", data=expiring_foods)
 
     @router.get("/recommendation", description="홈화면 추천 레시피, 서비스 UI")
     async def get_recommendation(

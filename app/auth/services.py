@@ -3,6 +3,7 @@ from passlib.context import CryptContext
 
 from app.application.response import APIError
 from app.application.error import ErrorCode
+from app.auth.dto.auth import FoodCheckFormDTO, FoodCheckEnum
 from app.env_validator import get_settings
 from app.logger import use_logger
 
@@ -71,3 +72,30 @@ class AuthService:
             return payload.get("uid"), payload.get("hn")
         except PyJWTError:
             return None
+
+    @staticmethod
+    def analyze_average_intake(food_check_data: FoodCheckFormDTO) -> FoodCheckEnum:
+        status_scores = {
+            FoodCheckEnum.too_much: 3,
+            FoodCheckEnum.just_right: 2,
+            FoodCheckEnum.too_little: 1,
+        }
+
+        total_score = sum(
+            [
+                status_scores[food_check_data.food_check_pasta],
+                status_scores[food_check_data.food_check_pizza],
+                status_scores[food_check_data.food_check_cutlet],
+                status_scores[food_check_data.food_check_ramen],
+                status_scores[food_check_data.food_check_bibimbap],
+            ]
+        )
+
+        average_score = total_score / 5
+
+        if average_score > 2.3:
+            return FoodCheckEnum.too_much
+        elif average_score < 1.7:
+            return FoodCheckEnum.too_little
+        else:
+            return FoodCheckEnum.just_right

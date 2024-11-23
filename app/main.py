@@ -11,10 +11,19 @@ from app.logger import use_logger
 from app.env_validator import get_settings
 from app.containers import AppContainers
 
+from app.user.entities import User
+
 from app.auth.endpoints import router as auth_router
+from app.home.endpoints import router as home_router
+from app.recipe.endpoints import router as recipe_router
+from app.refrigerator.endpoints import router as refrigerator_router
+from app.timer.endpoints import router as timer_router
+from app.hardware.endpoints import router as hardware_router
 
 logger = use_logger("bootstrapper")
 settings = get_settings()
+
+TEST_USER_UUID = "17fca8cb-b391-4aa6-8338-976a956fa788"
 
 
 def bootstrap() -> FastAPI:
@@ -23,7 +32,7 @@ def bootstrap() -> FastAPI:
         logger.info("Starting application")
         config = generate_config(
             settings.DATABASE_URI,
-            app_modules={"models": []},
+            app_modules={"models": ["app.user.entities", "app.hardware.entities"]},
             testing=settings.APP_ENV == "testing",
             connection_label="models",
         )
@@ -33,6 +42,11 @@ def bootstrap() -> FastAPI:
             modules=[
                 __name__,
                 "app.auth.endpoints",
+                "app.home.endpoints",
+                "app.recipe.endpoints",
+                "app.refrigerator.endpoints",
+                "app.timer.endpoints",
+                "app.hardware.endpoints",
             ]
         )
         logger.info("Container Wiring complete")
@@ -50,7 +64,7 @@ def bootstrap() -> FastAPI:
         logger.info("Application shutdown complete")
 
     app = FastAPI(
-        title="Fresio Auth API",
+        title="Fresio API",
         lifespan=lifespan,
         docs_url="/api/docs",
         redoc_url=None,
@@ -64,3 +78,8 @@ container = AppContainers()
 server = bootstrap()
 
 server.include_router(auth_router)
+server.include_router(home_router)
+server.include_router(recipe_router)
+server.include_router(refrigerator_router)
+server.include_router(timer_router)
+server.include_router(hardware_router)

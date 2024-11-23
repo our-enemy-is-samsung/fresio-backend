@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     DATABASE_URI: str
     JWT_SECRET_KEY: str
     GOOGLE_CLIENT_ID: str
+    REDIS_URI: str
 
     @staticmethod
     @field_validator("SERVER_PORT")

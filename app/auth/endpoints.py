@@ -1,4 +1,4 @@
-import aiogoogle.excs
+import uuid
 from dependency_injector.wiring import inject, Provide
 
 from fastapi import APIRouter, Depends
@@ -6,15 +6,11 @@ from fastapi_restful.cbv import cbv
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from app.application.authorization import get_current_user_id
 from app.application.error import ErrorCode
-from app.application.response import APIResponse, APIError, SuccessfulEntityResponse
-from app.auth.dto import login_dto
-from app.auth.schema.string import AuthorizationURLSchema
-from app.auth.schema.user import UserLoginResponse, UserLoginRequestType
+from app.application.response import APIResponse, APIError
+from app.auth.dto import auth
 from app.auth.services import AuthService
 from app.containers import AppContainers
-from app.google.services import GoogleRequestService
 
 from app.user.entities import User
 
@@ -33,22 +29,16 @@ class AuthEndpoint:
 
     @router.post(
         "/login",
-        description="구글 로그인",
+        description="디바이스 로그인",
         response_model=APIResponse[dict],
     )
     @inject
     async def google_login(
         self,
-        data: login_dto.GoogleLoginDTO,
-        google_service: "GoogleRequestService" = Depends(
-            Provide[AppContainers.google.service]
-        ),
+        data: auth.DeviceLoginDTO,
         auth_service: "AuthService" = Depends(Provide[AppContainers.auth.service]),
     ) -> APIResponse[dict]:
-        google_user_data = await google_service.validate_id_token(data.id_token)
-        entity = await auth_service.get_from_credential(
-            "email::" + google_user_data["email"]
-        )
+        entity = await auth_service.get_from_device(data.device_id)
         if not entity:
             raise APIError(
                 status_code=400,
@@ -59,5 +49,36 @@ class AuthEndpoint:
         return APIResponse[dict](
             status="success",
             message="User logged in successfully",
+            data={"access_token": access_token},
+        )
+
+    @router.post(
+        "/register",
+        description="로그인",
+        response_model=APIResponse[dict],
+    )
+    @inject
+    async def google_signup(
+        self,
+        data: auth.DeviceRegisterDTO,
+        auth_service: "AuthService" = Depends(Provide[AppContainers.auth.service]),
+    ) -> APIResponse[dict]:
+        entity = await auth_service.get_from_device(data.device_id)
+        if entity:
+            raise APIError(
+                status_code=400,
+                message="User already exists.",
+                error_code=ErrorCode.USER_ALREADY_EXISTS,
+            )
+        user = await User.create(
+            id=uuid.uuid4(),
+            name=data.name,
+            device_id=data.device_id,
+            meal_type=data.meal_type,
+        )
+        access_token = await auth_service.create_access_token(str(user.id))
+        return APIResponse[dict](
+            status="success",
+            message="User registered successfully",
             data={"access_token": access_token},
         )

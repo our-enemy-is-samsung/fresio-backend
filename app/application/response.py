@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Literal, Any
+from typing import Generic, TypeVar, Any
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -16,7 +16,7 @@ class APIResponse(BaseModel, Generic[T]):
 
 
 class SuccessfulEntityResponse(BaseSchema):
-    entity_id: str = Field(..., examples=["673c114c-e920-4b6c-bc16-f5666c8d1e60"])
+    entity_id: UUID = Field(..., examples=["673c114c-e920-4b6c-bc16-f5666c8d1e60"])
 
 
 class ErrorResponse(BaseSchema):

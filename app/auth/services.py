@@ -23,8 +23,8 @@ class AuthService:
         self.hashed_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     @staticmethod
-    async def get_from_credential(email: str) -> User | bool:
-        entity = await User.get_or_none(email=email)
+    async def get_from_device(device_id: str) -> User | bool:
+        entity = await User.get_or_none(device_id=device_id)
         if not entity:
             return False
         return entity
@@ -41,7 +41,7 @@ class AuthService:
         )
         return self.hashed_context.verify(nonce_content, nonce)
 
-    async def create_access_token(self, entity_id: str) -> str:
+    def synchronous_create_access_token(self, entity_id: str) -> str:
         hash_nonce = self.create_nonce(entity_id, settings.JWT_SECRET_KEY[2:8])
         encoded_jwt = jwt_encode(
             {"uid": entity_id, "hn": hash_nonce},
@@ -49,6 +49,9 @@ class AuthService:
             algorithm="HS256",
         )
         return encoded_jwt
+
+    async def create_access_token(self, entity_id: str) -> str:
+        return self.synchronous_create_access_token(entity_id)
 
     async def get_user_id_from_token(self, token: str) -> USER_ID:
         payload = jwt_decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
